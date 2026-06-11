@@ -2,3 +2,4 @@
 const WC_DEMO = location.hostname.endsWith("github.io");
 const API = "";
 const DEMO_DATA_URL = WC_DEMO ? "data/demo.json" : null;
+const GITHUB_REPO = "https://github.com/Angela-letter/world-cup-2026-dashboard";

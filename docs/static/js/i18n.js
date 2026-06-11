@@ -16,6 +16,7 @@ const WC_LANGS = [
 const STRINGS = {
   "zh-CN": {
     "page.title": "2026 世界杯 · 观赛指挥台",
+    "masthead.titleHtml": "世界杯 <em>观赛指挥台</em>",
     "masthead.sub": "美加墨 · 48 队 · 实时赛程 · 赔率 · 积分 · 邮件推送",
     "masthead.updated": "更新于 {time}",
     "masthead.syncing": "同步中…",
@@ -99,6 +100,11 @@ const STRINGS = {
     "legend.ou": "大小球盘口",
     "legend.sp": "让球盘",
     "footer.disclaimer": "非投注建议",
+    "footer.github": "GitHub ★",
+    "star.title": "觉得好用？",
+    "star.body": "给开源项目点个 Star，支持我们继续维护赛程与功能。",
+    "star.cta": "⭐ Star on GitHub",
+    "star.dismiss": "下次再说",
     "slot.dawn": "凌晨场 (00:00–08:00)",
     "slot.morning": "上午场 (08:00–12:00)",
     "slot.afternoon": "下午场 (12:00–18:00)",
@@ -140,6 +146,7 @@ const STRINGS = {
   },
   en: {
     "page.title": "2026 World Cup · Match Center",
+    "masthead.titleHtml": "World Cup <em>Match Center</em>",
     "masthead.sub": "USA · Canada · Mexico · 48 teams · Live schedule · Odds · Standings · Email alerts",
     "masthead.updated": "Updated {time}",
     "masthead.syncing": "Syncing…",
@@ -223,6 +230,11 @@ const STRINGS = {
     "legend.ou": "Over/Under",
     "legend.sp": "Point spread",
     "footer.disclaimer": "Not betting advice",
+    "footer.github": "GitHub ★",
+    "star.title": "Enjoying the dashboard?",
+    "star.body": "Star the project on GitHub — it helps us keep schedules and features updated.",
+    "star.cta": "⭐ Star on GitHub",
+    "star.dismiss": "Not now",
     "slot.dawn": "Late night (00:00–08:00)",
     "slot.morning": "Morning (08:00–12:00)",
     "slot.afternoon": "Afternoon (12:00–18:00)",
@@ -269,7 +281,12 @@ Object.assign(STRINGS, {
   ja: {
     ...STRINGS.en,
     "page.title": "2026 ワールドカップ · 試合センター",
+    "masthead.titleHtml": "ワールドカップ <em>観戦センター</em>",
     "masthead.sub": "米加墨 · 48チーム · 日程 · オッズ · 順位表 · メール通知",
+    "star.title": "便利ですか？",
+    "star.body": "GitHub で Star をいただけると、今後の更新の励みになります。",
+    "star.cta": "⭐ GitHub で Star",
+    "star.dismiss": "あとで",
     "masthead.updated": "更新 {time}",
     "masthead.syncing": "同期中…",
     "masthead.autoRefresh": "自動更新",
@@ -297,7 +314,12 @@ Object.assign(STRINGS, {
   es: {
     ...STRINGS.en,
     "page.title": "Mundial 2026 · Centro de partidos",
+    "masthead.titleHtml": "Mundial <em>Centro de partidos</em>",
     "masthead.sub": "EE.UU. · Canadá · México · 48 selecciones · Calendario · Cuotas · Clasificación",
+    "star.title": "¿Te resulta útil?",
+    "star.body": "Dale una Star en GitHub y ayúdanos a seguir mejorando el calendario.",
+    "star.cta": "⭐ Star en GitHub",
+    "star.dismiss": "Ahora no",
     "masthead.updated": "Actualizado {time}",
     "masthead.syncing": "Sincronizando…",
     "masthead.autoRefresh": "Autoactualizar",
@@ -320,7 +342,12 @@ Object.assign(STRINGS, {
   pt: {
     ...STRINGS.en,
     "page.title": "Copa 2026 · Central de jogos",
+    "masthead.titleHtml": "Copa <em>Central de jogos</em>",
     "masthead.sub": "EUA · Canadá · México · 48 seleções · Calendário · Odds · Classificação",
+    "star.title": "Está gostando?",
+    "star.body": "Deixe uma Star no GitHub — isso nos ajuda a manter o projeto.",
+    "star.cta": "⭐ Star no GitHub",
+    "star.dismiss": "Depois",
     "masthead.updated": "Atualizado {time}",
     "masthead.syncing": "Sincronizando…",
     "masthead.autoRefresh": "Atualização automática",
@@ -339,7 +366,12 @@ Object.assign(STRINGS, {
   de: {
     ...STRINGS.en,
     "page.title": "WM 2026 · Spielzentrale",
+    "masthead.titleHtml": "WM <em>Spielzentrale</em>",
     "masthead.sub": "USA · Kanada · Mexiko · 48 Teams · Spielplan · Quoten · Tabelle",
+    "star.title": "Gefällt dir die Seite?",
+    "star.body": "Gib uns einen Star auf GitHub — das hilft bei weiteren Updates.",
+    "star.cta": "⭐ Star auf GitHub",
+    "star.dismiss": "Später",
     "masthead.updated": "Aktualisiert {time}",
     "masthead.syncing": "Synchronisiere…",
     "masthead.autoRefresh": "Auto-Aktualisierung",
@@ -358,7 +390,12 @@ Object.assign(STRINGS, {
   fr: {
     ...STRINGS.en,
     "page.title": "Coupe du monde 2026 · Centre matchs",
+    "masthead.titleHtml": "Coupe du monde <em>Centre matchs</em>",
     "masthead.sub": "États-Unis · Canada · Mexique · 48 équipes · Calendrier · Cotes · Classement",
+    "star.title": "Ça vous plaît ?",
+    "star.body": "Une étoile sur GitHub nous aide à faire évoluer le calendrier.",
+    "star.cta": "⭐ Star sur GitHub",
+    "star.dismiss": "Plus tard",
     "masthead.updated": "Mis à jour {time}",
     "masthead.syncing": "Synchronisation…",
     "masthead.autoRefresh": "Rafraîchissement auto",
@@ -377,7 +414,12 @@ Object.assign(STRINGS, {
   ko: {
     ...STRINGS.en,
     "page.title": "2026 월드컵 · 경기 센터",
+    "masthead.titleHtml": "월드컵 <em>경기 센터</em>",
     "masthead.sub": "미국 · 캐나다 · 멕시코 · 48개국 · 일정 · 배당 · 순위 · 이메일 알림",
+    "star.title": "마음에 드시나요?",
+    "star.body": "GitHub에서 Star를 눌러 주시면 개발에 큰 힘이 됩니다.",
+    "star.cta": "⭐ GitHub Star",
+    "star.dismiss": "나중에",
     "masthead.updated": "업데이트 {time}",
     "masthead.syncing": "동기화 중…",
     "masthead.autoRefresh": "자동 새로고침",
@@ -452,6 +494,10 @@ function applyStaticI18n() {
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.dataset.i18n;
     if (key) el.textContent = t(key);
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+    const key = el.dataset.i18nHtml;
+    if (key) el.innerHTML = t(key);
   });
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
     const key = el.dataset.i18nPlaceholder;

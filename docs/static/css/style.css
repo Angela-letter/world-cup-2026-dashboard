@@ -568,6 +568,82 @@ body {
 .toast--ok { border-left: 3px solid var(--pitch); }
 .toast--err { border-left: 3px solid var(--live); }
 
+.footer-github {
+  color: var(--pitch);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.footer-github:hover {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+.star-prompt {
+  position: fixed;
+  right: clamp(1rem, 3vw, 1.5rem);
+  bottom: clamp(1rem, 3vw, 1.5rem);
+  z-index: 90;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 1.1rem 1.25rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gold);
+  box-shadow: var(--shadow);
+  transform: translateY(1.25rem);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+
+.star-prompt--visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.star-prompt__close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.45rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.star-prompt__close:hover {
+  color: var(--text);
+}
+
+.star-prompt__title {
+  margin: 0 1.5rem 0.35rem 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.star-prompt__body {
+  margin: 0 0 0.85rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.star-prompt__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .match-grid {
   display: flex;
   flex-direction: column;

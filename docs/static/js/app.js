@@ -773,6 +773,61 @@ function setupFilterMore() {
   window.addEventListener("resize", sync);
 }
 
+const STAR_PROMPT_KEY = "wc_star_prompt_v1";
+const STAR_PROMPT_DELAY_MS = 42000;
+
+function dismissStarPrompt() {
+  const el = $("#starPrompt");
+  if (!el) return;
+  el.classList.remove("star-prompt--visible");
+  el.hidden = true;
+  localStorage.setItem(STAR_PROMPT_KEY, "1");
+}
+
+function setupStarPrompt() {
+  const el = $("#starPrompt");
+  if (!el || localStorage.getItem(STAR_PROMPT_KEY)) return;
+
+  const repo = typeof GITHUB_REPO === "string" ? GITHUB_REPO : "";
+  $("#footerGithub")?.setAttribute("href", repo);
+  $("#starPromptStar")?.setAttribute("href", repo);
+
+  let shown = false;
+  let delayTimer = null;
+  let scrollTimer = null;
+
+  const showPrompt = () => {
+    if (shown || localStorage.getItem(STAR_PROMPT_KEY) || document.hidden) return;
+    shown = true;
+    if (delayTimer) clearTimeout(delayTimer);
+    if (scrollTimer) clearTimeout(scrollTimer);
+    el.hidden = false;
+    requestAnimationFrame(() => el.classList.add("star-prompt--visible"));
+  };
+
+  delayTimer = setTimeout(showPrompt, STAR_PROMPT_DELAY_MS);
+
+  const onScroll = () => {
+    if (shown || scrollTimer || window.scrollY < 180) return;
+    scrollTimer = setTimeout(showPrompt, 12000);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+
+  document.addEventListener("visibilitychange", () => {
+    if (shown || localStorage.getItem(STAR_PROMPT_KEY)) return;
+    if (document.hidden) {
+      clearTimeout(delayTimer);
+      delayTimer = null;
+    } else if (!delayTimer) {
+      delayTimer = setTimeout(showPrompt, STAR_PROMPT_DELAY_MS);
+    }
+  });
+
+  $("#starPromptDismiss")?.addEventListener("click", dismissStarPrompt);
+  $("#starPromptClose")?.addEventListener("click", dismissStarPrompt);
+  $("#starPromptStar")?.addEventListener("click", () => dismissStarPrompt());
+}
+
 async function init() {
   setupDemoMode();
   setupLang();
@@ -781,6 +836,7 @@ async function init() {
   setupTabs();
   setupFilters();
   setupFilterMore();
+  setupStarPrompt();
   if (!WC_DEMO) {
     setupRefresh();
     setupNotify();

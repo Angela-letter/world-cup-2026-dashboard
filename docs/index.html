@@ -18,7 +18,7 @@
   <header class="masthead">
     <div class="masthead__brand">
       <span class="masthead__edition">FIFA 2026</span>
-      <h1>世界杯 <em>观赛指挥台</em></h1>
+      <h1 data-i18n-html="masthead.titleHtml">世界杯 <em>观赛指挥台</em></h1>
       <p class="masthead__sub" data-i18n="masthead.sub">美加墨 · 48 队 · 实时赛程 · 赔率 · 积分 · 邮件推送</p>
     </div>
     <div class="masthead__meta">
@@ -198,7 +198,19 @@
     <span>Data: ESPN</span>
     <span>·</span>
     <span data-i18n="footer.disclaimer">非投注建议</span>
+    <span>·</span>
+    <a class="footer-github" id="footerGithub" href="https://github.com/Angela-letter/world-cup-2026-dashboard" target="_blank" rel="noopener noreferrer" data-i18n="footer.github">GitHub ★</a>
   </footer>
+
+  <aside class="star-prompt" id="starPrompt" hidden aria-live="polite" role="dialog" aria-labelledby="starPromptTitle">
+    <button type="button" class="star-prompt__close" id="starPromptClose" aria-label="Close">×</button>
+    <p class="star-prompt__title" id="starPromptTitle" data-i18n="star.title">觉得好用？</p>
+    <p class="star-prompt__body" data-i18n="star.body">给开源项目点个 Star，支持我们继续维护赛程与功能。</p>
+    <div class="star-prompt__actions">
+      <a class="btn btn--accent" id="starPromptStar" href="https://github.com/Angela-letter/world-cup-2026-dashboard" target="_blank" rel="noopener noreferrer" data-i18n="star.cta">Star on GitHub</a>
+      <button type="button" class="btn btn--ghost btn--sm" id="starPromptDismiss" data-i18n="star.dismiss">下次再说</button>
+    </div>
+  </aside>
 
   <script src="static/js/config.js"></script>
   <script src="static/js/timezone.js"></script>
