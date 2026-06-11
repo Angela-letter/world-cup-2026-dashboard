@@ -1,0 +1,10 @@
+.env
+notify_config.json
+alert_state.json
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.pyo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,9 @@
+{
+  "email": "",
+  "enabled": false,
+  "notify_before_minutes": 30,
+  "auto_email_minutes": 60,
+  "notify_score_change": true,
+  "notify_prematch": true,
+  "subscribed_matches": []
+}

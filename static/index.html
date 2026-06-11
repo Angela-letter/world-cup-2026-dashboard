@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <title>2026 世界杯 · 观赛指挥台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="pitch-bg" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="masthead">
+    <div class="masthead__brand">
+      <span class="masthead__edition">FIFA 2026</span>
+      <h1>世界杯 <em>观赛指挥台</em></h1>
+      <p class="masthead__sub" data-i18n="masthead.sub">美加墨 · 48 队 · 实时赛程 · 赔率 · 积分 · 邮件推送</p>
+    </div>
+    <div class="masthead__meta">
+      <div class="refresh-badge" id="refreshBadge">
+        <span class="pulse-dot"></span>
+        <span id="lastUpdate" data-i18n="masthead.syncing">同步中…</span>
+      </div>
+      <label class="refresh-control">
+        <span data-i18n="masthead.autoRefresh">自动刷新</span>
+        <select id="refreshInterval" aria-label="Auto refresh interval">
+          <option value="60" data-min="1">1</option>
+          <option value="120" selected data-min="2">2</option>
+          <option value="300" data-min="5">5</option>
+        </select>
+      </label>
+      <label class="lang-control">
+        <select id="langSelect" aria-label="Language"></select>
+      </label>
+      <details class="tools-menu">
+        <summary class="btn btn--ghost" data-i18n="calendar.title">日历</summary>
+        <div class="tools-menu__panel">
+          <button type="button" id="btnExportFiltered" data-i18n="calendar.exportFiltered">导出当前筛选</button>
+          <a id="btnExportRecommended" href="/api/calendar/recommended.ics" download data-i18n="calendar.recommended">新球迷推荐赛程</a>
+          <a id="btnExportSubscribed" href="/api/calendar/subscribed.ics" download data-i18n="calendar.subscribed">我的订阅赛程</a>
+        </div>
+      </details>
+    </div>
+    <p class="toast" id="toastMsg" hidden></p>
+  </header>
+
+  <section class="hero" id="heroSection">
+    <div class="hero__countdown" id="countdown">
+      <span class="hero__label" data-i18n="hero.label">距下一场比赛</span>
+      <div class="hero__timer" id="countdownTimer">--:--:--</div>
+      <div class="hero__match" id="heroMatch">…</div>
+    </div>
+    <div class="hero__flags" id="heroFlags"></div>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab tab--active" data-tab="matches" type="button" data-i18n="tab.matches">赛程</button>
+    <button class="tab" data-tab="standings" type="button" data-i18n="tab.standings">积分榜</button>
+    <button class="tab" data-tab="news" type="button" data-i18n="tab.news">资讯</button>
+    <button class="tab" data-tab="notify" type="button" data-i18n="tab.notify">邮件推送</button>
+  </nav>
+
+  <main class="layout">
+    <section class="panel panel--active" id="panel-matches">
+      <div class="filter-panel">
+        <div class="filter-bar">
+          <span class="filter-bar__label" data-i18n="filter.status">状态</span>
+          <button class="chip chip--active" data-filter="all" type="button" data-i18n="filter.all">全部</button>
+          <button class="chip" data-filter="live" type="button"><span data-i18n="filter.live">进行中</span> <span id="liveCount">0</span></button>
+          <button class="chip" data-filter="upcoming" type="button" data-i18n="filter.upcoming">未开始</button>
+          <button class="chip" data-filter="finished" type="button" data-i18n="filter.finished">已结束</button>
+          <button class="chip chip--star" data-filter="recommended" type="button"><span data-i18n="filter.recommended">新球迷推荐</span> <span id="recCount">0</span></button>
+          <span class="filter-summary" id="filterSummary"></span>
+        </div>
+        <details class="filter-more">
+          <summary data-i18n="filter.more">更多筛选 · 赛段 / 球场 / 球队</summary>
+        <div class="filter-advanced">
+          <label class="filter-field">
+            <span data-i18n="filter.stage">赛段</span>
+            <select id="filterStage"><option value="" data-i18n="filter.allStage">全部赛段</option></select>
+          </label>
+          <label class="filter-field">
+            <span data-i18n="filter.date">日期</span>
+            <select id="filterDate"><option value="" data-i18n="filter.allDate">全部日期</option></select>
+          </label>
+          <label class="filter-field">
+            <span data-i18n="filter.venue">体育场</span>
+            <select id="filterVenue"><option value="" data-i18n="filter.allVenue">全部球场</option></select>
+          </label>
+          <label class="filter-field">
+            <span data-i18n="filter.city">城市</span>
+            <select id="filterCity"><option value="" data-i18n="filter.allCity">全部城市</option></select>
+          </label>
+          <label class="filter-field">
+            <span data-i18n="filter.host">举办国</span>
+            <select id="filterHost"><option value="" data-i18n="filter.allHost">全部举办国</option></select>
+          </label>
+          <label class="filter-field">
+            <span data-i18n="filter.team">参赛队</span>
+            <select id="filterTeam"><option value="" data-i18n="filter.allTeam">全部球队</option></select>
+          </label>
+          <label class="filter-field">
+            <span data-i18n="filter.continent">洲别</span>
+            <select id="filterContinent"><option value="" data-i18n="filter.allContinent">全部大洲</option></select>
+          </label>
+          <label class="filter-field">
+            <span data-i18n="filter.timeSlot">开球时段</span>
+            <select id="filterTimeSlot"><option value="" data-i18n="filter.allTimeSlot">全部时段</option></select>
+          </label>
+          <button class="btn btn--ghost btn--sm" id="filterReset" type="button" data-i18n="filter.reset">重置</button>
+        </div>
+        <div class="filter-presets">
+          <select id="presetSelect" class="preset-select">
+            <option value="" data-i18n="filter.preset">常用筛选…</option>
+          </select>
+          <button class="btn btn--ghost btn--sm" id="presetSave" type="button" data-i18n="filter.save">保存</button>
+          <button class="btn btn--ghost btn--sm" id="presetDelete" type="button" data-i18n="filter.delete">删除</button>
+        </div>
+        </details>
+      </div>
+      <div class="match-grid" id="matchGrid"></div>
+    </section>
+
+    <section class="panel" id="panel-standings">
+      <div class="standings-grid" id="standingsGrid"></div>
+    </section>
+
+    <section class="panel" id="panel-news">
+      <div class="news-list" id="newsList"></div>
+    </section>
+
+    <section class="panel" id="panel-notify">
+      <div class="notify-card">
+        <h2 data-i18n="notify.title">邮件推送（可选）</h2>
+        <p data-i18n="notify.desc">发件需配置 QQ SMTP；收件可为任意邮箱。</p>
+        <form id="notifyForm" class="notify-form">
+          <label>
+            <span data-i18n="notify.email">收件邮箱</span>
+            <input type="email" id="notifyEmail" data-i18n-placeholder="notify.email" placeholder="you@example.com" required />
+          </label>
+          <label>
+            <span data-i18n="notify.before">赛前提醒（分钟）</span>
+            <input type="number" id="notifyBefore" min="5" max="180" value="30" />
+          </label>
+          <label>
+            <span data-i18n="notify.interval">定时简报间隔（分钟）</span>
+            <input type="number" id="autoEmailMin" min="15" max="360" value="60" />
+          </label>
+          <div class="checkbox-row">
+            <label><input type="checkbox" id="notifyPrematch" checked /> <span data-i18n="notify.prematch">赛前提醒</span></label>
+            <label><input type="checkbox" id="notifyScore" checked /> <span data-i18n="notify.score">比分变化</span></label>
+            <label><input type="checkbox" id="notifyEnabled" /> <span data-i18n="notify.enabled">启用自动推送</span></label>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn--primary" type="submit" data-i18n="notify.save">保存订阅</button>
+            <button class="btn btn--accent" type="button" id="btnSendNow" data-i18n="notify.sendNow">立即发送简报</button>
+          </div>
+        </form>
+        <p class="notify-status" id="notifyStatus"></p>
+      </div>
+      <div class="notify-card notify-card--sub">
+        <h2 data-i18n="notify.subscribedTitle">已订阅比赛</h2>
+        <p data-i18n="notify.subscribedDesc">订阅后将在开赛、比分变化、完场、小组积分变动时推送邮件。</p>
+        <ul class="subscribed-list" id="subscribedList">
+          <li class="empty-state" data-i18n="empty.subscribed">在赛程页点击「订阅」添加</li>
+        </ul>
+      </div>
+    </section>
+
+    <aside class="sidebar">
+      <div class="sidebar__block">
+        <h3 data-i18n="sidebar.phases">赛事阶段</h3>
+        <ul class="phase-list" id="phaseList"></ul>
+      </div>
+      <div class="sidebar__block sidebar__block--accent">
+        <h3 data-i18n="sidebar.legend">数据说明</h3>
+        <ul class="legend">
+          <li><span class="legend__tag">ML</span> <span data-i18n="legend.ml">胜平负美式赔率</span></li>
+          <li><span class="legend__tag">%</span> <span data-i18n="legend.pct">隐含胜率</span></li>
+          <li><span class="legend__tag">O/U</span> <span data-i18n="legend.ou">大小球盘口</span></li>
+          <li><span class="legend__tag">SP</span> <span data-i18n="legend.sp">让球盘</span></li>
+        </ul>
+        <p class="sidebar__note" data-i18n="sidebar.oddsNote">赔率来源 ESPN / DraftKings，仅供参考。</p>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <span>Data: ESPN</span>
+    <span>·</span>
+    <span data-i18n="footer.disclaimer">非投注建议</span>
+  </footer>
+
+  <script src="/static/js/i18n.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
