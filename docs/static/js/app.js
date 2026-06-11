@@ -669,6 +669,8 @@ function setupTz() {
   sel.addEventListener("change", () => {
     if (sel.value === WC_TZ_FOLLOW) {
       clearTzManualAndApplyLang();
+    } else if (sel.value.startsWith("browser:")) {
+      setTzOffset(parseInt(sel.value.split(":")[1], 10), { manual: true });
     } else {
       setTzOffset(parseInt(sel.value, 10), { manual: true });
     }

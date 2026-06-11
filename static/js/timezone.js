@@ -3,9 +3,10 @@ const WC_TZ_OFFSET_KEY = "wc_tz_offset";
 const WC_TZ_MANUAL_KEY = "wc_tz_manual";
 const WC_TZ_FOLLOW = "follow";
 
+/** Language-default UTC offsets (minutes east of UTC). WC 2026 is Jun–Jul → US on EDT. */
 const LANG_DEFAULT_TZ = {
   "zh-CN": 480,
-  en: -300,
+  en: -240,
   ja: 540,
   es: -360,
   pt: -180,
@@ -92,16 +93,34 @@ function clearTzManualAndApplyLang() {
   applyLangDefaultTz();
 }
 
+/** Minutes east of UTC for the visitor's system clock (handles DST). */
+function getBrowserOffsetMinutes() {
+  return -new Date().getTimezoneOffset();
+}
+
+/** Parse ESPN ISO instant → UTC epoch ms. Never mix in the browser's local zone. */
+function parseUtcMs(iso) {
+  if (!iso) return NaN;
+  let ms = Date.parse(iso);
+  if (!Number.isNaN(ms)) return ms;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(iso) && !/[zZ+\-]/.test(iso.slice(10))) {
+    ms = Date.parse(`${iso}Z`);
+  }
+  return Number.isNaN(ms) ? NaN : ms;
+}
+
 function _localParts(iso) {
-  const d = new Date(iso);
-  const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
-  const local = new Date(utcMs + _offsetMinutes * 60000);
+  const utcMs = parseUtcMs(iso);
+  if (Number.isNaN(utcMs)) {
+    return { year: 0, month: 0, day: 0, hour: 0, minute: 0 };
+  }
+  const shifted = new Date(utcMs + _offsetMinutes * 60000);
   return {
-    year: local.getUTCFullYear(),
-    month: local.getUTCMonth() + 1,
-    day: local.getUTCDate(),
-    hour: local.getUTCHours(),
-    minute: local.getUTCMinutes(),
+    year: shifted.getUTCFullYear(),
+    month: shifted.getUTCMonth() + 1,
+    day: shifted.getUTCDate(),
+    hour: shifted.getUTCHours(),
+    minute: shifted.getUTCMinutes(),
   };
 }
 
@@ -127,8 +146,8 @@ function formatDateShort(iso) {
 
 function formatRange(iso, durationMin = 120) {
   const start = formatTime(iso);
-  const d = new Date(iso);
-  const endIso = new Date(d.getTime() + durationMin * 60000).toISOString();
+  const utcMs = parseUtcMs(iso);
+  const endIso = new Date(utcMs + durationMin * 60000).toISOString();
   return `${start}–${formatTime(endIso)}`;
 }
 
@@ -196,6 +215,14 @@ function formatPhaseDetail(detail, useZh) {
 function buildTzSelectOptions() {
   const opts = [];
   opts.push({ value: WC_TZ_FOLLOW, label: typeof t === "function" ? t("tz.followLang") : "Follow language" });
+  const browserMin = getBrowserOffsetMinutes();
+  if (!Number.isNaN(browserMin) && browserMin % 60 === 0) {
+    const hint = TZ_CITY_HINTS[String(browserMin)] || (typeof t === "function" ? t("tz.browser") : "Browser");
+    opts.push({
+      value: `browser:${browserMin}`,
+      label: `${offsetToLabel(browserMin)} · ${hint}`,
+    });
+  }
   for (let h = -12; h <= 14; h += 1) {
     const min = h * 60;
     const hint = TZ_CITY_HINTS[String(min)] || "";
@@ -208,5 +235,17 @@ function buildTzSelectOptions() {
 function syncTzSelectValue() {
   const sel = document.getElementById("tzSelect");
   if (!sel) return;
-  sel.value = isTzManual() ? String(_offsetMinutes) : WC_TZ_FOLLOW;
+  if (!isTzManual()) {
+    sel.value = WC_TZ_FOLLOW;
+    return;
+  }
+  const browserVal = `browser:${getBrowserOffsetMinutes()}`;
+  const exact = String(_offsetMinutes);
+  if ([...sel.options].some((o) => o.value === exact)) {
+    sel.value = exact;
+  } else if ([...sel.options].some((o) => o.value === browserVal) && _offsetMinutes === getBrowserOffsetMinutes()) {
+    sel.value = browserVal;
+  } else {
+    sel.value = exact;
+  }
 }
