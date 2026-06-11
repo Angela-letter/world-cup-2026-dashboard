@@ -20,11 +20,11 @@ A fan-built dashboard for the **2026 FIFA World Cup** (USA · Canada · Mexico).
 
 ## Screenshots
 
-| Desktop | Mobile |
-|---------|--------|
-| ![Matches](docs/screenshots/matches-desktop.png) | ![Mobile](docs/screenshots/matches-mobile.png) |
+![Hero countdown & filters](docs/screenshots/hero-countdown.png)
 
-![Hero countdown](docs/screenshots/hero-countdown.png)
+| Fan picks & match cards | Group standings |
+|-------------------------|-----------------|
+| ![Matches](docs/screenshots/matches-desktop.png) | ![Standings](docs/screenshots/standings.png) |
 
 ## Quick start
 
