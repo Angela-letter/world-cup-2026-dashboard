@@ -5,8 +5,12 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![ESPN Data](https://img.shields.io/badge/Data-ESPN%20(unofficial)-orange)
 ![Status](https://img.shields.io/badge/Status-Community%20Demo-purple)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-GitHub_Pages-blue)](https://angela-letter.github.io/world-cup-2026-dashboard/)
 
-A fan-built dashboard for the **2026 FIFA World Cup** (USA · Canada · Mexico). Live schedule, odds, standings, news, calendar export (.ics), and optional email alerts — in **8 UI languages**.
+A fan-built dashboard for the **2026 FIFA World Cup** (USA · Canada · Mexico). Live schedule, odds, standings, news, calendar export (.ics), and optional email alerts — in **8 UI languages** with **timezone selector** (UTC offsets, defaults follow language).
+
+**Live demo (read-only):** https://angela-letter.github.io/world-cup-2026-dashboard/  
+**Full version (local):** email alerts, calendar export, live ESPN refresh — run FastAPI below.
 
 > **Disclaimer:** Unofficial project. Data from ESPN public endpoints. Not affiliated with FIFA. Odds are for reference only — not betting advice.
 
@@ -33,7 +37,11 @@ cp notify_config.example.json notify_config.json
 python -m uvicorn server:app --host 127.0.0.1 --port 8765
 ```
 
-Open **http://127.0.0.1:8765** — use the language selector in the header.
+Open **http://127.0.0.1:8765** — use the language and timezone selectors in the header (timezone defaults follow language; pick any UTC offset manually).
+
+### GitHub Pages demo
+
+Push to `master` triggers [`.github/workflows/pages.yml`](.github/workflows/pages.yml): exports ESPN snapshot → builds `docs/` → deploys static site. Demo hides email/subscribe/calendar; data refreshes on each deploy.
 
 ### Email alerts (optional)
 
