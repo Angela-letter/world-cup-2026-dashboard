@@ -7,6 +7,10 @@ const ESPN_STANDINGS =
 const ESPN_NEWS =
   "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/news";
 
+const TOURNAMENT_START = Date.parse("2026-06-11T00:00:00Z");
+const TOURNAMENT_END = Date.parse("2026-07-19T23:59:59Z");
+const SCOREBOARD_LOOKAHEAD_DAYS = 16;
+
 const STAR_TEAMS = new Set([
   "Brazil", "Argentina", "France", "Germany", "England", "Spain",
   "Portugal", "Netherlands", "Belgium", "Croatia", "Morocco", "Japan",
@@ -402,13 +406,22 @@ function buildFilterOptions(matches) {
   };
 }
 
-function ymdOffset(days) {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + days);
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}${m}${day}`;
+function scoreboardDates() {
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  let endMs = todayUtc + SCOREBOARD_LOOKAHEAD_DAYS * 86400000;
+  if (endMs > TOURNAMENT_END) endMs = TOURNAMENT_END;
+  const days = [];
+  let ms = TOURNAMENT_START;
+  while (ms <= endMs) {
+    const d = new Date(ms);
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    days.push(`${y}${m}${day}`);
+    ms += 86400000;
+  }
+  return days;
 }
 
 export async function fetchAllData() {
@@ -417,27 +430,32 @@ export async function fetchAllData() {
   const seen = new Set();
   let calendar = [];
 
-  for (let offset = 0; offset < 18; offset += 1) {
-    const day = ymdOffset(offset - 1);
-    try {
-      const res = await fetch(`${ESPN_SCOREBOARD}?dates=${day}`);
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (offset === 0) {
-        for (const league of data.leagues || []) {
-          for (const cal of league.calendar || []) {
-            calendar = localizeCalendar(cal.entries || []);
-          }
+  const dayPayloads = await Promise.all(
+    scoreboardDates().map(async (day) => {
+      try {
+        const res = await fetch(`${ESPN_SCOREBOARD}?dates=${day}`);
+        if (!res.ok) return null;
+        return res.json();
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  for (const data of dayPayloads) {
+    if (!data) continue;
+    if (!calendar.length) {
+      for (const league of data.leagues || []) {
+        for (const cal of league.calendar || []) {
+          calendar = localizeCalendar(cal.entries || []);
         }
       }
-      for (const ev of data.events || []) {
-        if (!seen.has(ev.id)) {
-          seen.add(ev.id);
-          matches.push(parseMatch(ev));
-        }
+    }
+    for (const ev of data.events || []) {
+      if (!seen.has(ev.id)) {
+        seen.add(ev.id);
+        matches.push(parseMatch(ev));
       }
-    } catch {
-      // skip failed day
     }
   }
 
@@ -468,8 +486,8 @@ export async function fetchAllData() {
     filter_options: buildFilterOptions(matches),
     matches,
     live,
-    upcoming: upcoming.slice(0, 20),
-    finished: finished.slice(-10),
+    upcoming,
+    finished,
     next_match: upcoming[0] || null,
     standings,
     news,
@@ -481,6 +499,7 @@ export async function fetchAllData() {
       total_matches: matches.length,
       live_count: live.length,
       upcoming_count: upcoming.length,
+      finished_count: finished.length,
       subscribed_count: 0,
       recommended_count: [...recIds].length,
     },

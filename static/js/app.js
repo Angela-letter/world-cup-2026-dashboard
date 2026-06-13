@@ -131,17 +131,17 @@ function matchPassesAdvanced(m) {
 
 function getFilteredMatches() {
   if (!state.data) return [];
-  const { matches, live, upcoming, finished } = state.data;
+  const { matches } = state.data;
   let base;
   switch (state.filter) {
     case "live":
-      base = live;
+      base = matches.filter((m) => m.status === "in");
       break;
     case "upcoming":
-      base = upcoming;
+      base = matches.filter((m) => m.status === "pre");
       break;
     case "finished":
-      base = finished;
+      base = matches.filter((m) => m.status === "post").reverse();
       break;
     case "recommended":
       base = matches.filter((m) => m.recommended);

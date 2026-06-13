@@ -48,6 +48,9 @@ STATIC_DIR = BASE_DIR / "static"
 CONFIG_PATH = BASE_DIR / "notify_config.json"
 STATE_PATH = BASE_DIR / "alert_state.json"
 ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+TOURNAMENT_START = datetime(2026, 6, 11, tzinfo=timezone.utc).date()
+TOURNAMENT_END = datetime(2026, 7, 19, tzinfo=timezone.utc).date()
+SCOREBOARD_LOOKAHEAD_DAYS = 16
 ESPN_STANDINGS = "https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings"
 ESPN_NEWS = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/news"
 
@@ -355,6 +358,32 @@ def localize_calendar(calendar: list[dict]) -> list[dict]:
     ]
 
 
+def scoreboard_dates(now: Optional[datetime] = None) -> list[str]:
+    """Fetch from tournament start through today + lookahead (capped at final)."""
+    now = now or datetime.now(timezone.utc)
+    today = now.date()
+    end = min(TOURNAMENT_END, today + timedelta(days=SCOREBOARD_LOOKAHEAD_DAYS))
+    start = TOURNAMENT_START
+    if end < start:
+        return [today.strftime("%Y%m%d")]
+    days: list[str] = []
+    d = start
+    while d <= end:
+        days.append(d.strftime("%Y%m%d"))
+        d += timedelta(days=1)
+    return days
+
+
+async def _fetch_scoreboard_day(client: httpx.AsyncClient, day: str) -> Optional[dict]:
+    try:
+        r = await client.get(ESPN_SCOREBOARD, params={"dates": day})
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except httpx.HTTPError:
+        return None
+
+
 async def fetch_all_data() -> dict:
     now = datetime.now(timezone.utc)
     matches: list[dict] = []
@@ -362,23 +391,20 @@ async def fetch_all_data() -> dict:
     seen: set[str] = set()
 
     async with httpx.AsyncClient(timeout=30) as client:
-        for offset in range(18):
-            day = (now + timedelta(days=offset - 1)).strftime("%Y%m%d")
-            try:
-                r = await client.get(ESPN_SCOREBOARD, params={"dates": day})
-                if r.status_code != 200:
-                    continue
-                data = r.json()
-                if offset == 0:
-                    for league in data.get("leagues", []):
-                        for cal in league.get("calendar", []):
-                            calendar = localize_calendar(cal.get("entries", []))
-                for ev in data.get("events", []):
-                    if ev["id"] not in seen:
-                        seen.add(ev["id"])
-                        matches.append(parse_match(ev))
-            except httpx.HTTPError:
+        day_payloads = await asyncio.gather(
+            *[_fetch_scoreboard_day(client, day) for day in scoreboard_dates(now)]
+        )
+        for data in day_payloads:
+            if not data:
                 continue
+            if not calendar:
+                for league in data.get("leagues", []):
+                    for cal in league.get("calendar", []):
+                        calendar = localize_calendar(cal.get("entries", []))
+            for ev in data.get("events", []):
+                if ev["id"] not in seen:
+                    seen.add(ev["id"])
+                    matches.append(parse_match(ev))
 
         standings: list[dict] = []
         news: list[dict] = []
@@ -411,8 +437,8 @@ async def fetch_all_data() -> dict:
         "filter_options": build_filter_options(matches),
         "matches": matches,
         "live": live,
-        "upcoming": upcoming[:20],
-        "finished": finished[-10:],
+        "upcoming": upcoming,
+        "finished": finished,
         "next_match": upcoming[0] if upcoming else None,
         "standings": standings,
         "news": news,
@@ -424,6 +450,7 @@ async def fetch_all_data() -> dict:
             "total_matches": len(matches),
             "live_count": len(live),
             "upcoming_count": len(upcoming),
+            "finished_count": len(finished),
             "subscribed_count": len(sub_ids),
             "recommended_count": sum(1 for m in matches if m.get("recommended")),
         },
