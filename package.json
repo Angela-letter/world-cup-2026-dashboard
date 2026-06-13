@@ -1,0 +1,14 @@
+{
+  "name": "world-cup-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "2026 FIFA World Cup match center — static demo on Cloudflare Pages",
+  "scripts": {
+    "build:worker": "python scripts/export_i18n_bundle.py",
+    "build:data": "python scripts/export_demo_data.py",
+    "build:pages": "python scripts/build_pages.py",
+    "build": "npm run build:worker && npm run build:data && npm run build:pages",
+    "deploy": "npm run build && npx wrangler pages deploy docs --project-name=world-cup-dashboard --commit-dirty=true"
+  },
+  "license": "MIT"
+}

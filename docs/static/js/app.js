@@ -27,21 +27,66 @@ function isSubscribed(id) {
   return state.subscribed.has(String(id));
 }
 
+function parseLiveClock(m) {
+  const raw = String(m?.clock || m?.status_detail || "").trim();
+  if (!raw) return null;
+  if (/^HT$/i.test(raw) || /half/i.test(raw)) return { kind: "ht" };
+  const extra = raw.match(/^(\d+)\+(\d+)'?$/);
+  if (extra) return { kind: "min", min: extra[1], extra: extra[2] };
+  const simple = raw.match(/^(\d+)'?$/);
+  if (simple) return { kind: "min", min: simple[1] };
+  const embedded = raw.match(/(\d+)\+(\d+)'/);
+  if (embedded) return { kind: "min", min: embedded[1], extra: embedded[2] };
+  const minOnly = raw.match(/(\d+)'/);
+  if (minOnly) return { kind: "min", min: minOnly[1] };
+  return { kind: "raw", raw };
+}
+
+function liveProgressText(m) {
+  if (!m || m.status !== "in") return "";
+  const p = parseLiveClock(m);
+  if (!p) return t("chip.live");
+  if (p.kind === "ht") return t("match.halfTime");
+  if (p.kind === "min") {
+    return p.extra
+      ? t("match.liveMinuteExtra", { min: p.min, extra: p.extra })
+      : t("match.liveMinute", { min: p.min });
+  }
+  return p.raw || t("chip.live");
+}
+
+function liveProgressShort(m) {
+  const p = parseLiveClock(m);
+  if (!p) return "LIVE";
+  if (p.kind === "ht") return "HT";
+  if (p.kind === "min") return p.extra ? `${p.min}+${p.extra}'` : `${p.min}'`;
+  return p.raw || "LIVE";
+}
+
 async function fetchData(force = false) {
   const badge = $("#refreshBadge");
-  if (force && !WC_DEMO) {
+  if (force) {
     badge?.classList.add("refresh-badge--busy");
     $("#lastUpdate").textContent = t("masthead.syncing");
   }
   try {
     let data;
-    if (WC_DEMO && DEMO_DATA_URL) {
-      const res = await fetch(DEMO_DATA_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(t("error.load"));
-      data = await res.json();
+    if (WC_DEMO) {
+      const liveUrl = `${API_BASE}/api/data?_=${Date.now()}`;
+      try {
+        const res = await fetch(liveUrl, { cache: "no-store" });
+        if (!res.ok) throw new Error(t("error.load"));
+        data = await res.json();
+      } catch {
+        if (!DEMO_FALLBACK_URL) throw new Error(t("error.load"));
+        const res = await fetch(DEMO_FALLBACK_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error(t("error.load"));
+        data = await res.json();
+        data._fallback = true;
+      }
     } else {
       const q = force ? `refresh=true&_=${Date.now()}` : "refresh=false";
-      const res = await fetch(`${API}/api/data?${q}`, { cache: "no-store" });
+      const res = await fetch(`${API_BASE}/api/data?${q}`, { cache: "no-store" });
       if (!res.ok) throw new Error(t("error.load"));
       data = await res.json();
     }
@@ -50,7 +95,9 @@ async function fetchData(force = false) {
     render();
     const at = state.data.exported_at || state.data.fetched_at;
     const time = new Date(at).toLocaleTimeString(localeForDates());
-    $("#lastUpdate").textContent = t("masthead.updated", { time });
+    const suffix = state.data._fallback ? ` · ${t("demo.fallback")}` : "";
+    $("#lastUpdate").textContent = t("masthead.updated", { time }) + suffix;
+    if (WC_DEMO) setupDemoMode();
   } finally {
     badge?.classList.remove("refresh-badge--busy");
   }
@@ -295,7 +342,7 @@ async function exportFilteredCalendar() {
     return;
   }
   try {
-    const res = await fetch(`${API}/api/calendar/export`, {
+    const res = await fetch(`${API_BASE}/api/calendar/export`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ match_ids: list.map((m) => String(m.id)) }),
@@ -311,7 +358,7 @@ async function exportFilteredCalendar() {
 
 async function toggleSubscribe(matchId, btn) {
   try {
-    const res = await fetch(`${API}/api/subscribe/match`, {
+    const res = await fetch(`${API_BASE}/api/subscribe/match`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ match_id: String(matchId), action: "toggle" }),
@@ -332,21 +379,48 @@ async function toggleSubscribe(matchId, btn) {
 }
 
 function renderHero() {
-  const nm = state.data?.next_match;
+  const liveMatch = state.data?.live?.[0];
+  const nm = liveMatch || state.data?.next_match;
   const timerEl = $("#countdownTimer");
   const matchEl = $("#heroMatch");
   const flagsEl = $("#heroFlags");
+  const labelEl = document.querySelector(".hero__label");
 
   if (!nm) {
     timerEl.textContent = "—";
     matchEl.textContent = t("hero.noMatch");
     flagsEl.innerHTML = "";
+    if (labelEl) labelEl.textContent = t("hero.label");
     return;
   }
 
-  const kickoff = new Date(nm.date);
   const range = formatRange(nm.date);
   const dateStr = formatDateDay(nm.date);
+  const isLive = nm.status === "in";
+
+  if (labelEl) {
+    labelEl.textContent = isLive ? t("hero.liveLabel") : t("hero.label");
+  }
+
+  if (isLive) {
+    matchEl.innerHTML = `
+      <strong>${teamDisplay(nm.home)} ${nm.home.score} - ${nm.away.score} ${teamDisplay(nm.away)}</strong><br/>
+      <small>${liveProgressText(nm)} · ${stageLabelFrom(nm)} · ${t("hero.venueLine", { date: dateStr, range, tz: tzLabel(), venue: venueDisplay(nm.venue) })}</small>
+    `;
+    flagsEl.innerHTML = `
+      <img src="${nm.home.flag}" alt="${teamDisplay(nm.home)}" onerror="this.style.display='none'" />
+      <span class="vs">VS</span>
+      <img src="${nm.away.flag}" alt="${teamDisplay(nm.away)}" onerror="this.style.display='none'" />
+    `;
+    timerEl.textContent = liveProgressShort(nm);
+    timerEl.classList.add("hero__timer--live");
+    clearInterval(state.countdownTimer);
+    state.countdownTimer = null;
+    return;
+  }
+
+  timerEl.classList.remove("hero__timer--live");
+  const kickoff = new Date(nm.date);
   matchEl.innerHTML = `
     <strong>${teamDisplay(nm.home)}</strong> vs <strong>${teamDisplay(nm.away)}</strong><br/>
     <small>${t("hero.venueLine", { date: dateStr, range, tz: tzLabel(), venue: venueDisplay(nm.venue) })}</small>
@@ -398,10 +472,11 @@ function renderMatches() {
 
       return `
       <article class="match-card ${live ? "match-card--live" : ""} ${m.recommended ? "match-card--recommended" : ""}" style="--i:${i}">
+        ${live ? `<span class="match-card__live-pill">${liveProgressShort(m)}</span>` : ""}
         <div class="match-card__time">
           <strong>${fmtTimeOnly(m.date)}</strong>
           ${fmtDateDay(m.date)}
-          <div class="match-card__status">${stageLabelFrom(m)} · ${slot}</div>
+          <div class="match-card__status">${live ? `<span class="match-card__minute">${liveProgressText(m)}</span> · ` : ""}${stageLabelFrom(m)} · ${slot}</div>
           <div class="match-card__range">${t("match.timeLocal", { range, tz: tzLabel() })}</div>
         </div>
         <div>
@@ -683,16 +758,25 @@ function setupDemoMode() {
   const banner = $("#demoBanner");
   if (banner) {
     banner.hidden = false;
-    banner.textContent = t("demo.banner");
+    banner.textContent = state.data?._fallback ? t("demo.bannerFallback") : t("demo.banner");
   }
   document.querySelectorAll("[data-demo-hide]").forEach((el) => {
     el.hidden = true;
   });
 }
 
+function setupDemoRefresh() {
+  if (!WC_DEMO) return;
+  const badge = $("#refreshBadge");
+  badge?.addEventListener("click", () => fetchData(true).catch(showErr));
+  badge?.setAttribute("role", "button");
+  badge?.setAttribute("title", t("masthead.clickRefresh"));
+  state.refreshTimer = setInterval(() => fetchData(true).catch(showErr), 120000);
+}
+
 async function loadSubscribe() {
   try {
-    const res = await fetch(`${API}/api/subscribe`);
+    const res = await fetch(`${API_BASE}/api/subscribe`);
     const cfg = await res.json();
     if (cfg.email) $("#notifyEmail").value = cfg.email;
     $("#notifyBefore").value = cfg.notify_before_minutes ?? 30;
@@ -723,7 +807,7 @@ function setupNotify() {
       subscribed_matches: Array.from(state.subscribed),
     };
     try {
-      const res = await fetch(`${API}/api/subscribe`, {
+      const res = await fetch(`${API_BASE}/api/subscribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -743,7 +827,7 @@ function setupNotify() {
       return;
     }
     try {
-      const res = await fetch(`${API}/api/email/send`, {
+      const res = await fetch(`${API_BASE}/api/email/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -841,6 +925,8 @@ async function init() {
     setupRefresh();
     setupNotify();
     await loadSubscribe();
+  } else {
+    setupDemoRefresh();
   }
   applyStaticI18n();
   syncTzSelectValue();

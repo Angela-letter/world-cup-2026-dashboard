@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Export worker i18n bundle
+        run: python scripts/export_i18n_bundle.py
+
       - name: Export demo data
         run: python scripts/export_demo_data.py
 

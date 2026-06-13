@@ -178,8 +178,8 @@ def parse_match(ev: dict) -> dict:
         "city": comp.get("venue", {}).get("address", {}).get("city", ""),
         "country": comp.get("venue", {}).get("address", {}).get("country", ""),
     })
-    odds_raw = comp.get("odds", [{}])
-    odds = odds_raw[0] if odds_raw else {}
+    odds_raw = comp.get("odds") or []
+    odds = odds_raw[0] if odds_raw and odds_raw[0] else {}
     ml = odds.get("moneyline", {})
     spread = odds.get("pointSpread", {})
     total = odds.get("total", {})

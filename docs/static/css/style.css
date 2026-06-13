@@ -673,16 +673,30 @@ body {
   border-left: 4px solid var(--live);
 }
 
-.match-card--live::before {
-  content: "LIVE";
+.match-card__live-pill {
   position: absolute;
   top: 0.75rem;
   right: 1rem;
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 700;
   color: var(--live);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   animation: blink 1.2s step-end infinite;
+}
+
+.match-card__minute {
+  color: var(--live);
+  font-weight: 600;
+}
+
+.hero__timer--live {
+  color: var(--live);
+  letter-spacing: 0.04em;
+}
+
+.match-card--live::before {
+  content: none;
 }
 
 @keyframes blink {
